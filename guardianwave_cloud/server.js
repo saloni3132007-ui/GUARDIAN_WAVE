@@ -4,6 +4,8 @@ const http = require("http");
 const WebSocket = require("ws");
 const twilio = require("twilio");
 const fs = require("fs");
+const path = require("path");
+const sqlite3 = require("sqlite3").verbose();
 
 // TWILIO CONFIGURATION
 const twilioClient = twilio(
@@ -17,10 +19,61 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
+// DATABASE SETUP (SQLite)
+const db = new sqlite3.Database("./guardianwave.db");
+db.serialize(() => {
+  db.run(`CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, 
+        name TEXT, 
+        email TEXT UNIQUE, 
+        password TEXT, 
+        phone TEXT
+    )`);
+});
+
+// EXPRESS MIDDLEWARE
+app.use(express.json()); // Allows us to read JSON from the frontend
+app.use(express.static(path.join(__dirname, "public"))); // Serve the Web UI
+
+//  AUTHENTICATION ROUTES
+app.post("/api/signup", (req, res) => {
+  const { name, email, password, phone } = req.body;
+  db.run(
+    `INSERT INTO users (name, email, password, phone) VALUES (?, ?, ?, ?)`,
+    [name, email, password, phone],
+    function (err) {
+      if (err)
+        return res.status(400).json({ error: "Email already registered" });
+      res.json({ success: true, name: name });
+    },
+  );
+});
+
+app.post("/api/signin", (req, res) => {
+  const { email, password } = req.body;
+  db.get(
+    `SELECT name FROM users WHERE email = ? AND password = ?`,
+    [email, password],
+    (err, row) => {
+      if (row) res.json({ success: true, name: row.name });
+      else res.status(401).json({ error: "Invalid email or password" });
+    },
+  );
+});
+
+// UTILITY: Alert Persistence & UI Broadcasting
 function logSystemEvent(deviceId, eventType, details) {
   const timestamp = new Date().toISOString();
   const logEntry = `[${timestamp}] DEV:${deviceId} | EVENT:${eventType} | DETAILS:${details}\n`;
   fs.appendFileSync("alert_history.log", logEntry);
+}
+
+function broadcastToUI(payload) {
+  wss.clients.forEach((client) => {
+    if (client.isUI && client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify(payload));
+    }
+  });
 }
 
 // Signal Processing: Hampel Filter
@@ -68,28 +121,29 @@ class DeviceTracker {
     this.deviceId = deviceId;
     this.ws = ws;
 
-    this.csiFilter = new HampelFilter(40, 3); // increasing memory filter to catch slower falls
+    this.csiFilter = new HampelFilter(40, 3); // increasing memory filter to catch
     this.systemState = "IDLE";
     this.alertTimer = null;
     this.observationTimer = null;
     this.isAlertActive = false;
 
     this.persistentPirState = 0;
-
     this.postFallVarianceSum = 0;
     this.postFallFrameCount = 0;
 
-    // EMA Smoothing Variables
     this.smoothedAmplitude = null;
-    this.emaAlpha = 0.2; // 0.2 means 20% new data, 80% history (heavy smoothing)
+    this.emaAlpha = 0.2; // 20% real data and 80% pre trained data
 
-    logSystemEvent(this.deviceId, "CONNECTED", "Device initialized tracking.");
+    logSystemEvent(
+      this.deviceId,
+      "CONNECTED",
+      "ESP32 Device initialized tracking.",
+    );
   }
 
   processSensorData(sensorData) {
     this.persistentPirState = sensorData.pir;
 
-    // Apply EMA Smoothing before Variance Calculation
     if (this.smoothedAmplitude === null) {
       this.smoothedAmplitude = sensorData.amplitude;
     } else {
@@ -101,22 +155,33 @@ class DeviceTracker {
     let filterResult = this.csiFilter.process(this.smoothedAmplitude);
 
     // HUMAN ACTIVITY CLASSIFIER
-    let activityStatus = "EMPTY";
-
+    let activityStatus = "Room is empty";
     if (this.systemState === "ALERT") {
-      activityStatus = "🚨 FALL DETECTED 🚨";
+      activityStatus = "FALL DETECTED";
     } else if (this.systemState === "FALL_SUSPECTED") {
-      activityStatus = "⚠️ ANALYZING IMPACT...";
+      activityStatus = "Analyzing impact...";
     } else if (this.persistentPirState === 1) {
-      // setting threshold according to test
       if (filterResult.variance >= 3.0) {
-        activityStatus = "🏃 RUNNING / LARGE MOVEMENT";
+        activityStatus = "Large movement / Running";
       } else if (filterResult.variance >= 1.5) {
-        activityStatus = "🚶 WALKING";
+        activityStatus = "Walking detected";
       } else {
-        activityStatus = "🧍 IDLE / SITTING";
+        activityStatus = "Presence confirmed (Idle)";
       }
     }
+
+    // Send live data to the web dashboard
+    broadcastToUI({
+      event: "csiVariance",
+      value: filterResult.variance,
+      timestamp: Date.now(),
+    });
+    broadcastToUI({
+      event: "pirStatus",
+      value: this.persistentPirState,
+      message: activityStatus,
+      timestamp: Date.now(),
+    });
 
     process.stdout.write(
       `\r[DEV: ${this.deviceId}] [SYS: ${this.systemState}] [Activity: ${activityStatus.padEnd(26)}] PIR: ${this.persistentPirState} | Var: ${filterResult.variance.toFixed(2)}      `,
@@ -181,7 +246,12 @@ class DeviceTracker {
 
   triggerEmergencyProtocol() {
     this.isAlertActive = true;
-    this.ws.send("TRIGGER_BUZZER");
+    this.ws.send("TRIGGER_BUZZER"); // Trigger hardware buzzer
+    broadcastToUI({
+      event: "fallAlert",
+      status: "detected",
+      timestamp: Date.now(),
+    }); // Trigger UI Overlay
 
     this.alertTimer = setTimeout(() => {
       if (this.isAlertActive) {
@@ -193,6 +263,11 @@ class DeviceTracker {
           "TWILIO_CALL",
           "Victim unresponsive. Emergency call dispatched.",
         );
+        broadcastToUI({
+          event: "fallAlert",
+          status: "escalated",
+          timestamp: Date.now(),
+        });
 
         twilioClient.calls
           .create({
@@ -205,18 +280,19 @@ class DeviceTracker {
 
         this.resetState();
       }
-    }, 30000);
+    }, 30000); // 30 seconds buzzer trigger
   }
 
   cancelAlert() {
     console.log(
-      `\n[DEV: ${this.deviceId}] [RESOLVED] Hardware button pressed. Resetting system.`,
+      `\n[DEV: ${this.deviceId}] [RESOLVED] Alert cancelled. Resetting system.`,
     );
-    logSystemEvent(
-      this.deviceId,
-      "ALERT_CANCELED",
-      "User physically dismissed the alarm.",
-    );
+    logSystemEvent(this.deviceId, "ALERT_CANCELED", "Alarm dismissed.");
+    broadcastToUI({
+      event: "fallAlert",
+      status: "resolved",
+      timestamp: Date.now(),
+    });
     this.resetState();
   }
 
@@ -229,38 +305,58 @@ class DeviceTracker {
 }
 
 // WebSocket Event Listener
+let activeTracker = null;
+
 wss.on("connection", (ws, req) => {
-  const deviceId = req.socket.remoteAddress;
-  console.log(`\n[+] ESP32 Connected! Assigned ID: ${deviceId}`);
-
-  const tracker = new DeviceTracker(deviceId, ws);
-
   ws.on("message", (message) => {
     let dataStr = message.toString();
-    let sensorData;
+    let payload;
     try {
-      sensorData = JSON.parse(dataStr);
+      payload = JSON.parse(dataStr);
     } catch (e) {
       return;
     }
 
-    if (sensorData.event === "sensor_stream") {
-      tracker.processSensorData(sensorData);
-    } else if (sensorData.event === "cancel_alert") {
-      tracker.cancelAlert();
+    if (payload.event === "ui_connect") {
+      ws.isUI = true;
+      console.log(`\n[+] Web Dashboard UI Connected`);
+      return;
+    }
+
+    if (payload.event === "cancel_alert" && activeTracker) {
+      activeTracker.cancelAlert();
+      return;
+    }
+
+    if (payload.event === "sensor_stream") {
+      if (!activeTracker || activeTracker.ws !== ws) {
+        const deviceId = req.socket.remoteAddress;
+        console.log(`\n[+] ESP32 Connected! Assigned ID: ${deviceId}`);
+        activeTracker = new DeviceTracker(deviceId, ws);
+      }
+      activeTracker.processSensorData(payload);
     }
   });
 
   ws.on("close", () => {
-    console.log(`\n[-] Device ${deviceId} Disconnected`);
-    logSystemEvent(deviceId, "DISCONNECTED", "Connection closed.");
-    tracker.resetState();
+    if (!ws.isUI && activeTracker && activeTracker.ws === ws) {
+      console.log(`\n[-] ESP32 Disconnected`);
+      logSystemEvent(
+        activeTracker.deviceId,
+        "DISCONNECTED",
+        "Connection closed.",
+      );
+      activeTracker.resetState();
+      activeTracker = null;
+    } else if (ws.isUI) {
+      console.log(`\n[-] Web Dashboard UI Disconnected`);
+    }
   });
 });
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`===================================================`);
-  console.log(`GuardianWave Live Activity Tracker Online`);
+  console.log(`GuardianWave Server Online at http://localhost:${PORT}`);
   console.log(`===================================================`);
 });
