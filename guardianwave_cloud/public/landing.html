@@ -1,0 +1,979 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GuardianWave — Know the moment it matters</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/custom.css" />
+
+    <style>
+      @keyframes gwDrift1 {
+        0%,
+        100% {
+          transform: translate(0, 0) scale(1);
+        }
+        50% {
+          transform: translate(30px, -20px) scale(1.15);
+        }
+      }
+      @keyframes gwDrift2 {
+        0%,
+        100% {
+          transform: translate(0, 0) scale(1);
+        }
+        50% {
+          transform: translate(-25px, 25px) scale(1.1);
+        }
+      }
+      @keyframes gwFadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(24px) scale(0.97);
+          filter: blur(4px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+          filter: blur(0);
+        }
+      }
+      @keyframes gwPulseRing {
+        0%,
+        100% {
+          box-shadow:
+            0 0 0 0 rgba(79, 209, 165, 0.5),
+            0 0 24px 4px rgba(79, 209, 165, 0.25);
+        }
+        50% {
+          box-shadow:
+            0 0 0 10px rgba(79, 209, 165, 0),
+            0 0 36px 8px rgba(79, 209, 165, 0.4);
+        }
+      }
+      @keyframes gwFlow {
+        to {
+          stroke-dashoffset: -40;
+        }
+      }
+      @keyframes gwNodeGlow {
+        0%,
+        20%,
+        100% {
+          filter: drop-shadow(0 0 0 rgba(79, 209, 165, 0));
+        }
+        8% {
+          filter: drop-shadow(0 0 6px rgba(79, 209, 165, 0.8));
+        }
+      }
+      @keyframes gwFloat {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-6px);
+        }
+      }
+      @keyframes gwWaveGlow {
+        0%,
+        100% {
+          filter: drop-shadow(0 0 3px rgba(79, 209, 165, 0.6));
+        }
+        50% {
+          filter: drop-shadow(0 0 9px rgba(79, 209, 165, 0.95));
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #080f11;
+        font-family: var(--font-sans, "IBM Plex Sans", sans-serif);
+        color: #eaf2f0;
+        position: relative;
+        overflow-x: hidden;
+      }
+      a {
+        text-decoration: none;
+        color: inherit;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 40px;
+      }
+
+      .ambient {
+        position: fixed;
+        inset: 0;
+        overflow: hidden;
+        z-index: 0;
+        pointer-events: none;
+      }
+      .blob-1 {
+        position: absolute;
+        width: 380px;
+        height: 380px;
+        top: -100px;
+        left: -60px;
+        border-radius: 50%;
+        background: #4fd1a5;
+        opacity: 0.16;
+        filter: blur(70px);
+        animation: gwDrift1 8s ease-in-out infinite;
+      }
+      .blob-2 {
+        position: absolute;
+        width: 440px;
+        height: 440px;
+        top: 120px;
+        right: -100px;
+        border-radius: 50%;
+        background: #ff7a59;
+        opacity: 0.12;
+        filter: blur(85px);
+        animation: gwDrift2 9s ease-in-out infinite;
+      }
+
+      .gwCard {
+        animation: gwFadeUp 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+      }
+      .gwLogoWave {
+        color: #4fd1a5;
+        text-shadow: 0 0 12px rgba(79, 209, 165, 0.6);
+      }
+      .gwCTA {
+        animation: gwPulseRing 2.2s ease-in-out infinite;
+        transition: transform 0.25s ease;
+        cursor: pointer;
+      }
+      .gwCTA:hover {
+        transform: translateY(-3px) scale(1.06);
+      }
+      .gwGhost {
+        transition: all 0.25s ease;
+        cursor: pointer;
+      }
+      .gwGhost:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.4);
+        transform: translateY(-1px);
+      }
+      .gwNavLink {
+        cursor: pointer;
+        transition: color 0.2s ease;
+      }
+      .gwNavLink:hover {
+        color: #eaf2f0;
+      }
+
+      .gwFeatureCard {
+        transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+      .gwFeatureCard:hover {
+        transform: translateY(-6px);
+        background: #1b2e32;
+      }
+      .gwFeatureCard:hover .gwIcon {
+        transform: scale(1.2);
+      }
+      .gwIcon {
+        transition: transform 0.3s ease;
+        display: inline-block;
+      }
+      .gwLive {
+        animation: gwFloat 3s ease-in-out infinite;
+      }
+      .gwWave {
+        animation: gwWaveGlow 2.4s ease-in-out infinite;
+      }
+      .gwFlowLine {
+        stroke-dasharray: 3 9;
+        animation: gwFlow 0.9s linear infinite;
+      }
+      .gwNode1 {
+        animation: gwNodeGlow 3.2s ease-in-out infinite;
+      }
+      .gwNode2 {
+        animation: gwNodeGlow 3.2s ease-in-out infinite;
+        animation-delay: 0.5s;
+      }
+      .gwNode3 {
+        animation: gwNodeGlow 3.2s ease-in-out infinite;
+        animation-delay: 1s;
+      }
+      .gwNode4 {
+        animation: gwNodeGlow 3.2s ease-in-out infinite;
+        animation-delay: 1.5s;
+      }
+
+      @media (max-width: 900px) {
+        .container {
+          padding: 0 20px;
+        }
+        .hero-title {
+          font-size: 34px !important;
+        }
+        .features-grid,
+        .gallery-grid {
+          grid-template-columns: 1fr !important;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          animation: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="ambient">
+      <div class="blob-1"></div>
+      <div class="blob-2"></div>
+    </div>
+
+    <div style="position: relative; z-index: 1">
+      <div
+        class="container"
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding-top: 22px;
+          padding-bottom: 22px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        "
+      >
+        <div style="font-size: 18px; font-weight: 500; letter-spacing: 0.5px">
+          GUARDIAN<span class="gwLogoWave">WAVE</span>
+        </div>
+        <div style="display: flex; gap: 36px; font-size: 15px; color: #9fb0ac">
+          <span
+            class="gwNavLink"
+            onclick="
+              document
+                .getElementById('features')
+                .scrollIntoView({ behavior: 'smooth' })
+            "
+            >Features</span
+          >
+          <span
+            class="gwNavLink"
+            onclick="
+              document
+                .getElementById('workflow')
+                .scrollIntoView({ behavior: 'smooth' })
+            "
+            >Workflow</span
+          >
+          <span
+            class="gwNavLink"
+            onclick="
+              document
+                .getElementById('gallery')
+                .scrollIntoView({ behavior: 'smooth' })
+            "
+            >Gallery</span
+          >
+        </div>
+        <a
+          href="signin.html"
+          class="gwGhost"
+          style="
+            font-size: 14px;
+            padding: 10px 22px;
+            border: 1px solid rgba(79, 209, 165, 0.5);
+            color: #4fd1a5;
+            border-radius: 22px;
+            display: inline-block;
+          "
+          >Sign in / up</a
+        >
+      </div>
+
+      <div
+        class="container hero"
+        style="
+          position: relative;
+          text-align: center;
+          padding-top: 100px;
+          padding-bottom: 90px;
+        "
+      >
+        <div
+          class="gwCard"
+          style="
+            animation-delay: 0s;
+            font-size: 14px;
+            color: #4fd1a5;
+            letter-spacing: 2px;
+            margin-bottom: 22px;
+            text-shadow: 0 0 10px rgba(79, 209, 165, 0.5);
+          "
+        >
+          CITADEL 1.0 · FALL AND BREATHING MONITOR
+        </div>
+        <div
+          class="gwCard hero-title"
+          style="
+            animation-delay: 0.1s;
+            font-size: 64px;
+            font-weight: 500;
+            line-height: 1.15;
+            max-width: 900px;
+            margin: 0 auto 26px;
+          "
+        >
+          Know the moment it matters, without a single camera.
+        </div>
+        <div
+          class="gwCard"
+          style="
+            animation-delay: 0.2s;
+            font-size: 19px;
+            color: #9fb0ac;
+            max-width: 640px;
+            margin: 0 auto 40px;
+            line-height: 1.65;
+          "
+        >
+          GuardianWave watches breathing and falls through WiFi signals alone,
+          then calls for help the second it's needed.
+        </div>
+        <div
+          class="gwCard"
+          style="
+            animation-delay: 0.3s;
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 56px;
+          "
+        >
+          <a
+            href="index.html"
+            class="gwCTA"
+            style="
+              font-size: 16px;
+              padding: 16px 32px;
+              background: #4fd1a5;
+              color: #04342c;
+              border-radius: 26px;
+              font-weight: 500;
+              display: inline-block;
+            "
+            >See live demo</a
+          >
+          <span
+            class="gwGhost"
+            onclick="
+              document
+                .getElementById('workflow')
+                .scrollIntoView({ behavior: 'smooth' })
+            "
+            style="
+              font-size: 16px;
+              padding: 16px 32px;
+              border: 1px solid rgba(255, 255, 255, 0.18);
+              border-radius: 26px;
+              display: inline-block;
+            "
+            >How it works</span
+          >
+        </div>
+        <div class="gwCard" style="animation-delay: 0.4s">
+          <svg
+            viewBox="0 0 500 60"
+            style="
+              width: 100%;
+              max-width: 720px;
+              height: 80px;
+              display: block;
+              margin: 0 auto;
+            "
+          >
+            <polyline
+              class="gwWave"
+              points="0,30 40,30 55,10 70,50 85,30 180,30 195,12 210,48 225,30 320,30 335,8 350,52 365,30 460,30 475,15 490,45 500,30"
+              fill="none"
+              stroke="#4FD1A5"
+              stroke-width="2.5"
+            />
+          </svg>
+        </div>
+      </div>
+
+      <div
+        id="features"
+        class="container"
+        style="
+          position: relative;
+          padding: 80px 40px;
+          border-top: 1px solid rgba(255, 255, 255, 0.07);
+        "
+      >
+        <div
+          class="gwCard"
+          style="
+            font-size: 14px;
+            color: #7c9490;
+            text-align: center;
+            letter-spacing: 2px;
+            margin-bottom: 40px;
+          "
+        >
+          FEATURES
+        </div>
+        <div
+          class="features-grid"
+          style="
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 28px;
+            max-width: 1100px;
+            margin: 0 auto;
+          "
+        >
+          <div
+            class="gwCard gwFeatureCard"
+            style="
+              animation-delay: 0.1s;
+              background: #12211f;
+              border-radius: 16px;
+              padding: 32px;
+              border: 1px solid rgba(79, 209, 165, 0.15);
+            "
+          >
+            <i class="gwIcon gwLive" style="font-size: 34px; color: #4fd1a5"
+              >💓</i
+            >
+            <div style="font-size: 19px; font-weight: 500; margin-top: 18px">
+              Breathing tracking
+            </div>
+            <div
+              style="
+                font-size: 14px;
+                color: #7c9490;
+                margin-top: 8px;
+                line-height: 1.6;
+              "
+            >
+              Reads breathing rate from WiFi variance, no wearable needed.
+            </div>
+          </div>
+          <div
+            class="gwCard gwFeatureCard"
+            style="
+              animation-delay: 0.2s;
+              background: #221715;
+              border-radius: 16px;
+              padding: 32px;
+              border: 1px solid rgba(255, 122, 89, 0.15);
+            "
+          >
+            <i
+              class="gwIcon gwLive"
+              style="font-size: 34px; color: #ff7a59; animation-delay: 0.3s"
+              >⚠️</i
+            >
+            <div style="font-size: 19px; font-weight: 500; margin-top: 18px">
+              Fall detection
+            </div>
+            <div
+              style="
+                font-size: 14px;
+                color: #7c9490;
+                margin-top: 8px;
+                line-height: 1.6;
+              "
+            >
+              Confirms falls with PIR and CSI together, cutting false alarms.
+            </div>
+          </div>
+          <div
+            class="gwCard gwFeatureCard"
+            style="
+              animation-delay: 0.3s;
+              background: #221d12;
+              border-radius: 16px;
+              padding: 32px;
+              border: 1px solid rgba(232, 163, 61, 0.15);
+            "
+          >
+            <i
+              class="gwIcon gwLive"
+              style="font-size: 34px; color: #e8a33d; animation-delay: 0.6s"
+              >📞</i
+            >
+            <div style="font-size: 19px; font-weight: 500; margin-top: 18px">
+              Instant call
+            </div>
+            <div
+              style="
+                font-size: 14px;
+                color: #7c9490;
+                margin-top: 8px;
+                line-height: 1.6;
+              "
+            >
+              Rings an emergency contact automatically if no one responds.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        id="workflow"
+        class="container"
+        style="
+          position: relative;
+          padding: 80px 40px;
+          border-top: 1px solid rgba(255, 255, 255, 0.07);
+        "
+      >
+        <div
+          class="gwCard"
+          style="
+            font-size: 14px;
+            color: #7c9490;
+            text-align: center;
+            letter-spacing: 2px;
+            margin-bottom: 40px;
+          "
+        >
+          WORKFLOW
+        </div>
+        <svg
+          viewBox="0 0 600 240"
+          style="
+            width: 100%;
+            max-width: 1000px;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+          "
+        >
+          <defs>
+            <marker
+              id="a1"
+              viewBox="0 0 10 10"
+              refX="8"
+              refY="5"
+              markerWidth="6"
+              markerHeight="6"
+              orient="auto-start-reverse"
+            >
+              <path
+                d="M2 1L8 5L2 9"
+                fill="none"
+                stroke="context-stroke"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </marker>
+          </defs>
+
+          <g class="gwNode1">
+            <rect
+              x="85"
+              y="10"
+              width="85"
+              height="42"
+              rx="8"
+              fill="#12211F"
+              stroke="#4FD1A5"
+              stroke-width="0.75"
+            />
+          </g>
+          <text
+            x="127"
+            y="26"
+            text-anchor="middle"
+            font-size="11"
+            font-weight="500"
+            fill="#EAF2F0"
+          >
+            Sensors
+          </text>
+          <text
+            x="127"
+            y="40"
+            text-anchor="middle"
+            font-size="11"
+            fill="#7C9490"
+          >
+            PIR + CSI
+          </text>
+
+          <line
+            x1="170"
+            y1="31"
+            x2="183"
+            y2="31"
+            stroke="#4FD1A5"
+            stroke-width="2"
+            class="gwFlowLine"
+            marker-end="url(#a1)"
+          />
+
+          <g class="gwNode2">
+            <rect
+              x="185"
+              y="10"
+              width="95"
+              height="42"
+              rx="8"
+              fill="#12211F"
+              stroke="#4FD1A5"
+              stroke-width="0.75"
+            />
+          </g>
+          <text
+            x="232"
+            y="26"
+            text-anchor="middle"
+            font-size="11"
+            font-weight="500"
+            fill="#EAF2F0"
+          >
+            ESP32-S3
+          </text>
+          <text
+            x="232"
+            y="40"
+            text-anchor="middle"
+            font-size="11"
+            fill="#7C9490"
+          >
+            Streams data
+          </text>
+
+          <line
+            x1="280"
+            y1="31"
+            x2="293"
+            y2="31"
+            stroke="#4FD1A5"
+            stroke-width="2"
+            class="gwFlowLine"
+            marker-end="url(#a1)"
+          />
+
+          <g class="gwNode3">
+            <rect
+              x="295"
+              y="10"
+              width="105"
+              height="42"
+              rx="8"
+              fill="#12211F"
+              stroke="#4FD1A5"
+              stroke-width="0.75"
+            />
+          </g>
+          <text
+            x="347"
+            y="26"
+            text-anchor="middle"
+            font-size="11"
+            font-weight="500"
+            fill="#EAF2F0"
+          >
+            Cloud engine
+          </text>
+          <text
+            x="347"
+            y="40"
+            text-anchor="middle"
+            font-size="11"
+            fill="#7C9490"
+          >
+            DSP filters
+          </text>
+
+          <line
+            x1="400"
+            y1="31"
+            x2="413"
+            y2="31"
+            stroke="#E8A33D"
+            stroke-width="2"
+            class="gwFlowLine"
+            marker-end="url(#a1)"
+          />
+
+          <g class="gwNode4">
+            <rect
+              x="415"
+              y="10"
+              width="105"
+              height="42"
+              rx="8"
+              fill="rgba(232,163,61,0.12)"
+              stroke="#E8A33D"
+              stroke-width="1.25"
+            />
+          </g>
+          <text
+            x="467"
+            y="26"
+            text-anchor="middle"
+            font-size="11"
+            font-weight="500"
+            fill="#F2C169"
+          >
+            Fall detected?
+          </text>
+          <text
+            x="467"
+            y="40"
+            text-anchor="middle"
+            font-size="11"
+            fill="#C98F3A"
+          >
+            CSI + PIR check
+          </text>
+
+          <path
+            d="M467,52 L467,75 L302,75 L302,98"
+            fill="none"
+            stroke="#E8A33D"
+            stroke-width="2"
+            class="gwFlowLine"
+            marker-end="url(#a1)"
+          />
+
+          <rect
+            x="232"
+            y="100"
+            width="140"
+            height="42"
+            rx="8"
+            fill="rgba(232,163,61,0.12)"
+            stroke="#E8A33D"
+            stroke-width="1.25"
+          />
+          <text
+            x="302"
+            y="116"
+            text-anchor="middle"
+            font-size="11"
+            font-weight="500"
+            fill="#F2C169"
+          >
+            Buzzer + 30s window
+          </text>
+          <text
+            x="302"
+            y="130"
+            text-anchor="middle"
+            font-size="11"
+            fill="#C98F3A"
+          >
+            Local alarm sounds
+          </text>
+
+          <path
+            d="M302,142 L302,150 L165,150 L165,158"
+            fill="none"
+            stroke="#4FD1A5"
+            stroke-width="2"
+            class="gwFlowLine"
+            marker-end="url(#a1)"
+          />
+          <path
+            d="M302,142 L302,150 L435,150 L435,158"
+            fill="none"
+            stroke="#FF7A59"
+            stroke-width="2"
+            class="gwFlowLine"
+            marker-end="url(#a1)"
+          />
+
+          <rect
+            x="100"
+            y="160"
+            width="130"
+            height="42"
+            rx="8"
+            fill="rgba(79,209,165,0.12)"
+            stroke="#4FD1A5"
+            stroke-width="1.25"
+          />
+          <text
+            x="165"
+            y="176"
+            text-anchor="middle"
+            font-size="11"
+            font-weight="500"
+            fill="#7EE6C4"
+          >
+            Resolved
+          </text>
+          <text
+            x="165"
+            y="190"
+            text-anchor="middle"
+            font-size="11"
+            fill="#4FD1A5"
+          >
+            Cancelled by button
+          </text>
+
+          <rect
+            x="370"
+            y="160"
+            width="130"
+            height="42"
+            rx="8"
+            fill="rgba(255,122,89,0.12)"
+            stroke="#FF7A59"
+            stroke-width="1.25"
+          />
+          <text
+            x="435"
+            y="176"
+            text-anchor="middle"
+            font-size="11"
+            font-weight="500"
+            fill="#FFA184"
+          >
+            Escalated
+          </text>
+          <text
+            x="435"
+            y="190"
+            text-anchor="middle"
+            font-size="11"
+            fill="#FF7A59"
+          >
+            Twilio calls contact
+          </text>
+        </svg>
+      </div>
+
+      <div
+        id="gallery"
+        class="container"
+        style="
+          position: relative;
+          padding: 80px 40px;
+          border-top: 1px solid rgba(255, 255, 255, 0.07);
+        "
+      >
+        <div
+          class="gwCard"
+          style="
+            font-size: 14px;
+            color: #7c9490;
+            text-align: center;
+            letter-spacing: 2px;
+            margin-bottom: 40px;
+          "
+        >
+          GALLERY
+        </div>
+        <div
+          class="gallery-grid"
+          style="
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 24px;
+            max-width: 900px;
+            margin: 0 auto;
+          "
+        >
+          <div
+            class="gwCard gwFeatureCard"
+            style="
+              animation-delay: 0.1s;
+              background: #12211f;
+              border-radius: 14px;
+              aspect-ratio: 4/3;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              border: 1px solid rgba(255, 255, 255, 0.06);
+              font-size: 38px;
+            "
+          >
+            🔧
+          </div>
+          <div
+            class="gwCard gwFeatureCard"
+            style="
+              animation-delay: 0.2s;
+              background: #12211f;
+              border-radius: 14px;
+              aspect-ratio: 4/3;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              border: 1px solid rgba(255, 255, 255, 0.06);
+              font-size: 38px;
+            "
+          >
+            🖥️
+          </div>
+          <div
+            class="gwCard gwFeatureCard"
+            style="
+              animation-delay: 0.3s;
+              background: #12211f;
+              border-radius: 14px;
+              aspect-ratio: 4/3;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              border: 1px solid rgba(255, 255, 255, 0.06);
+              font-size: 38px;
+            "
+          >
+            🔌
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="container"
+        style="
+          position: relative;
+          padding: 32px 40px;
+          border-top: 1px solid rgba(255, 255, 255, 0.07);
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 12px;
+        "
+      >
+        <div style="font-size: 14px; color: #7c9490">
+          GuardianWave · Citadel 1.0
+        </div>
+        <div style="display: flex; gap: 20px; font-size: 14px; color: #7c9490">
+          <span class="gwGhost" style="padding: 6px 10px; border-radius: 6px"
+            >Team</span
+          >
+          <span class="gwGhost" style="padding: 6px 10px; border-radius: 6px"
+            >Contact</span
+          >
+          <span class="gwGhost" style="padding: 6px 10px; border-radius: 6px"
+            >GitHub</span
+          >
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

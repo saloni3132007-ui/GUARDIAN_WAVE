@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GuardianWave — Create your account</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/custom.css" />
+
+    <style>
+      @keyframes gwDrift1 {
+        0%,
+        100% {
+          transform: translate(0, 0) scale(1);
+        }
+        50% {
+          transform: translate(30px, -20px) scale(1.15);
+        }
+      }
+      @keyframes gwDrift2 {
+        0%,
+        100% {
+          transform: translate(0, 0) scale(1);
+        }
+        50% {
+          transform: translate(-25px, 25px) scale(1.1);
+        }
+      }
+      @keyframes gwFadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px) scale(0.97);
+          filter: blur(4px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+          filter: blur(0);
+        }
+      }
+      @keyframes gwPulseRing {
+        0%,
+        100% {
+          box-shadow:
+            0 0 0 0 rgba(79, 209, 165, 0.5),
+            0 0 24px 4px rgba(79, 209, 165, 0.25);
+        }
+        50% {
+          box-shadow:
+            0 0 0 10px rgba(79, 209, 165, 0),
+            0 0 36px 8px rgba(79, 209, 165, 0.4);
+        }
+      }
+      @keyframes gwWaveGlow {
+        0%,
+        100% {
+          filter: drop-shadow(0 0 3px rgba(79, 209, 165, 0.5));
+        }
+        50% {
+          filter: drop-shadow(0 0 9px rgba(79, 209, 165, 0.9));
+        }
+      }
+      @keyframes gwRowIn {
+        from {
+          opacity: 0;
+          transform: translateY(-6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #0f1b1e;
+        font-family: var(--font-sans, "IBM Plex Sans", sans-serif);
+        color: #e8f0ee;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 20px;
+        position: relative;
+        overflow: hidden;
+      }
+      a {
+        text-decoration: none;
+      }
+
+      .ambient {
+        position: fixed;
+        inset: 0;
+        overflow: hidden;
+        z-index: 0;
+        pointer-events: none;
+      }
+      .blob-1 {
+        position: absolute;
+        width: 420px;
+        height: 420px;
+        top: -140px;
+        right: -120px;
+        border-radius: 50%;
+        background: #4fd1a5;
+        opacity: 0.14;
+        filter: blur(80px);
+        animation: gwDrift1 10s ease-in-out infinite;
+      }
+      .blob-2 {
+        position: absolute;
+        width: 460px;
+        height: 460px;
+        bottom: -160px;
+        left: -140px;
+        border-radius: 50%;
+        background: #e8a33d;
+        opacity: 0.08;
+        filter: blur(85px);
+        animation: gwDrift2 12s ease-in-out infinite;
+      }
+
+      .gwWrap {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        max-width: 460px;
+      }
+      .gwCard {
+        animation: gwFadeUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+      }
+      .gwLogoWave {
+        color: #4fd1a5;
+        text-shadow: 0 0 14px rgba(79, 209, 165, 0.5);
+        animation: gwWaveGlow 2.6s ease-in-out infinite;
+      }
+
+      .gwInput {
+        transition:
+          border-color 0.2s ease,
+          box-shadow 0.2s ease;
+      }
+      .gwInput:focus {
+        outline: none;
+        border-color: #4fd1a5 !important;
+        box-shadow: 0 0 0 3px rgba(79, 209, 165, 0.15);
+      }
+
+      .gwSubmit {
+        animation: gwPulseRing 2.4s ease-in-out infinite;
+        transition: transform 0.2s ease;
+        cursor: pointer;
+      }
+      .gwSubmit:hover {
+        transform: translateY(-2px);
+      }
+
+      @media (max-width: 520px) {
+        .gwWrap {
+          max-width: 100%;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        .gwCard {
+          animation: none !important;
+          opacity: 1 !important;
+          transform: none !important;
+          filter: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="ambient">
+      <div class="blob-1"></div>
+      <div class="blob-2"></div>
+    </div>
+
+    <div class="gwWrap">
+      <a
+        href="landing.html"
+        class="gwCard"
+        style="
+          animation-delay: 0s;
+          display: block;
+          text-align: center;
+          margin-bottom: 28px;
+          color: inherit;
+        "
+      >
+        <span style="font-size: 19px; font-weight: 500; letter-spacing: 0.5px"
+          >GUARDIAN<span class="gwLogoWave">WAVE</span></span
+        >
+      </a>
+
+      <div
+        class="gwCard"
+        style="
+          animation-delay: 0.1s;
+          background: #16262a;
+          border-radius: 16px;
+          padding: 32px;
+          border: 1px solid rgba(255, 255, 255, 0.06);
+        "
+      >
+        <div style="font-size: 20px; font-weight: 500; margin-bottom: 6px">
+          Create your account
+        </div>
+        <div
+          style="
+            font-size: 14px;
+            color: #7c9490;
+            margin-bottom: 26px;
+            line-height: 1.5;
+          "
+        >
+          Set up your room and who to call if something happens.
+        </div>
+
+        <div style="margin-bottom: 16px">
+          <label
+            style="
+              font-size: 13px;
+              color: #7c9490;
+              display: block;
+              margin-bottom: 7px;
+            "
+            >Full name</label
+          >
+          <input
+            id="signupName"
+            type="text"
+            placeholder="Your name"
+            class="gwInput"
+            style="
+              width: 100%;
+              background: rgba(255, 255, 255, 0.04);
+              border: 1px solid rgba(255, 255, 255, 0.1);
+              border-radius: 10px;
+              padding: 13px 14px;
+              font-size: 14px;
+              color: #e8f0ee;
+            "
+          />
+        </div>
+
+        <div style="margin-bottom: 16px">
+          <label
+            style="
+              font-size: 13px;
+              color: #7c9490;
+              display: block;
+              margin-bottom: 7px;
+            "
+            >Email</label
+          >
+          <input
+            id="signupEmail"
+            type="text"
+            placeholder="name@example.com"
+            class="gwInput"
+            style="
+              width: 100%;
+              background: rgba(255, 255, 255, 0.04);
+              border: 1px solid rgba(255, 255, 255, 0.1);
+              border-radius: 10px;
+              padding: 13px 14px;
+              font-size: 14px;
+              color: #e8f0ee;
+            "
+          />
+        </div>
+
+        <div style="margin-bottom: 22px">
+          <label
+            style="
+              font-size: 13px;
+              color: #7c9490;
+              display: block;
+              margin-bottom: 7px;
+            "
+            >Password</label
+          >
+          <input
+            id="signupPassword"
+            type="password"
+            placeholder="Create a password"
+            class="gwInput"
+            style="
+              width: 100%;
+              background: rgba(255, 255, 255, 0.04);
+              border: 1px solid rgba(255, 255, 255, 0.1);
+              border-radius: 10px;
+              padding: 13px 14px;
+              font-size: 14px;
+              color: #e8f0ee;
+            "
+          />
+        </div>
+
+        <div style="margin-bottom: 22px">
+          <label
+            style="
+              font-size: 13px;
+              color: #7c9490;
+              display: block;
+              margin-bottom: 7px;
+            "
+            >Emergency Contact Phone</label
+          >
+          <input
+            id="signupPhone"
+            type="text"
+            placeholder="+91 98765 43210"
+            class="gwInput"
+            style="
+              width: 100%;
+              background: rgba(255, 255, 255, 0.04);
+              border: 1px solid rgba(255, 255, 255, 0.1);
+              border-radius: 10px;
+              padding: 13px 14px;
+              font-size: 14px;
+              color: #e8f0ee;
+            "
+          />
+        </div>
+
+        <div
+          id="errorText"
+          style="
+            color: #ff7a59;
+            font-size: 13px;
+            text-align: center;
+            margin-bottom: 12px;
+            display: none;
+          "
+        ></div>
+
+        <div
+          id="createAccountBtn"
+          class="gwSubmit"
+          style="
+            background: #4fd1a5;
+            color: #04342c;
+            text-align: center;
+            font-size: 15px;
+            font-weight: 500;
+            padding: 14px 0;
+            border-radius: 10px;
+            margin-bottom: 16px;
+          "
+        >
+          Create account
+        </div>
+
+        <div style="text-align: center; font-size: 13px; color: #7c9490">
+          Already have an account?
+          <a href="signin.html" style="color: #4fd1a5">Sign in</a>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document
+        .getElementById("createAccountBtn")
+        .addEventListener("click", async function () {
+          const name = document.getElementById("signupName").value;
+          const email = document.getElementById("signupEmail").value;
+          const password = document.getElementById("signupPassword").value;
+          const phone = document.getElementById("signupPhone").value;
+          const errorText = document.getElementById("errorText");
+
+          if (!name || !email || !password || !phone) {
+            errorText.textContent = "Please fill out all fields.";
+            errorText.style.display = "block";
+            return;
+          }
+
+          try {
+            const response = await fetch("/api/signup", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ name, email, password, phone }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+              localStorage.setItem("gw_user", data.name);
+              window.location.href = "index.html"; // Redirect to dashboard
+            } else {
+              errorText.textContent = data.error;
+              errorText.style.display = "block";
+            }
+          } catch (err) {
+            errorText.textContent = "Server error. Try again.";
+            errorText.style.display = "block";
+          }
+        });
+    </script>
+  </body>
+</html>

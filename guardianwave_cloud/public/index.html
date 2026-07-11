@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GuardianWave — Live Monitor</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="css/custom.css" />
+
+    <style>
+      @keyframes gwDrift1 {
+        0%,
+        100% {
+          transform: translate(0, 0) scale(1);
+        }
+        50% {
+          transform: translate(30px, -20px) scale(1.15);
+        }
+      }
+      @keyframes gwDrift2 {
+        0%,
+        100% {
+          transform: translate(0, 0) scale(1);
+        }
+        50% {
+          transform: translate(-25px, 25px) scale(1.1);
+        }
+      }
+      @keyframes gwFadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px) scale(0.97);
+          filter: blur(4px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+          filter: blur(0);
+        }
+      }
+      @keyframes gwPulseCalm {
+        0%,
+        100% {
+          box-shadow:
+            0 0 0 0 rgba(79, 209, 165, 0.45),
+            0 0 20px 2px rgba(79, 209, 165, 0.2);
+        }
+        50% {
+          box-shadow:
+            0 0 0 8px rgba(79, 209, 165, 0),
+            0 0 28px 6px rgba(79, 209, 165, 0.35);
+        }
+      }
+      @keyframes gwPulseAlert {
+        0%,
+        100% {
+          box-shadow: 0 0 0 0 rgba(255, 122, 89, 0.6);
+        }
+        50% {
+          box-shadow: 0 0 0 14px rgba(255, 122, 89, 0);
+        }
+      }
+      @keyframes gwShake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        20% {
+          transform: translateX(-4px);
+        }
+        40% {
+          transform: translateX(4px);
+        }
+        60% {
+          transform: translateX(-3px);
+        }
+        80% {
+          transform: translateX(3px);
+        }
+      }
+      @keyframes gwPopIn {
+        from {
+          opacity: 0;
+          transform: scale(0.9);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #080f11;
+        font-family: var(--font-sans, "IBM Plex Sans", sans-serif);
+        color: #eaf2f0;
+        position: relative;
+        overflow-x: hidden;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 40px;
+      }
+      .ambient {
+        position: fixed;
+        inset: 0;
+        overflow: hidden;
+        z-index: 0;
+        pointer-events: none;
+      }
+      .blob-1 {
+        position: absolute;
+        width: 380px;
+        height: 380px;
+        top: -100px;
+        left: -60px;
+        border-radius: 50%;
+        background: #4fd1a5;
+        opacity: 0.14;
+        filter: blur(75px);
+        animation: gwDrift1 8s ease-in-out infinite;
+      }
+      .blob-2 {
+        position: absolute;
+        width: 420px;
+        height: 420px;
+        top: 200px;
+        right: -100px;
+        border-radius: 50%;
+        background: #e8a33d;
+        opacity: 0.08;
+        filter: blur(80px);
+        animation: gwDrift2 9s ease-in-out infinite;
+      }
+
+      .gwCard {
+        animation: gwFadeUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+      }
+      .gwLogoWave {
+        color: #4fd1a5;
+        text-shadow: 0 0 12px rgba(79, 209, 165, 0.6);
+      }
+
+      .gwRing {
+        transition: all 0.4s ease;
+      }
+      .gwRing.calm {
+        animation: gwPulseCalm 2.4s ease-in-out infinite;
+      }
+      .gwRing.alert {
+        animation:
+          gwPulseAlert 1s ease-in-out infinite,
+          gwShake 0.5s ease-in-out;
+        border-color: #ff7a59 !important;
+        color: #ff7a59 !important;
+      }
+
+      .gwStatCard {
+        transition: all 0.3s ease;
+      }
+      .gwStatCard:hover {
+        background: #1b2e32;
+        transform: translateY(-3px);
+      }
+
+      .gwOverlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(5, 10, 11, 0.88);
+        backdrop-filter: blur(3px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 50;
+      }
+      .gwOverlayCard {
+        animation: gwPopIn 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+        background: #1b2020;
+        border: 1px solid rgba(255, 122, 89, 0.4);
+        border-radius: 20px;
+        padding: 44px;
+        text-align: center;
+        max-width: 420px;
+      }
+      .gwResolveBtn {
+        transition: transform 0.2s ease;
+        cursor: pointer;
+      }
+      .gwResolveBtn:hover {
+        transform: translateY(-2px);
+      }
+      .hidden {
+        display: none !important;
+      }
+
+      @media (max-width: 900px) {
+        .container {
+          padding: 0 20px;
+        }
+        .gw-stat-row {
+          grid-template-columns: 1fr !important;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          animation: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="ambient">
+      <div class="blob-1"></div>
+      <div class="blob-2"></div>
+    </div>
+
+    <div
+      class="container"
+      style="
+        position: relative;
+        z-index: 1;
+        padding-top: 28px;
+        padding-bottom: 60px;
+      "
+    >
+      <div
+        class="gwCard"
+        style="
+          animation-delay: 0s;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 28px;
+          flex-wrap: wrap;
+          gap: 12px;
+        "
+      >
+        <div style="font-size: 18px; font-weight: 500; letter-spacing: 0.5px">
+          GUARDIAN<span class="gwLogoWave">WAVE</span>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap">
+          <div
+            id="connectionPill"
+            style="
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              background: rgba(255, 122, 89, 0.12);
+              color: #ff7a59;
+              font-size: 13px;
+              padding: 7px 16px;
+              border-radius: 22px;
+            "
+          >
+            <span
+              id="connectionDot"
+              style="
+                width: 7px;
+                height: 7px;
+                border-radius: 50%;
+                background: #ff7a59;
+                display: inline-block;
+              "
+            ></span>
+            <span id="connectionStatusText">Connecting...</span>
+          </div>
+          <div
+            style="
+              background: rgba(255, 255, 255, 0.06);
+              color: #9fb0ac;
+              font-size: 13px;
+              padding: 7px 16px;
+              border-radius: 22px;
+            "
+          >
+            <span id="deviceRoomLabel">Loading Session...</span>
+          </div>
+          <div
+            id="signOutBtn"
+            style="
+              cursor: pointer;
+              background: rgba(255, 255, 255, 0.06);
+              color: #9fb0ac;
+              font-size: 13px;
+              padding: 7px 16px;
+              border-radius: 22px;
+            "
+          >
+            Sign Out
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="gw-status-row gwCard"
+        style="
+          animation-delay: 0.1s;
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 16px;
+          margin-bottom: 16px;
+        "
+      >
+        <div
+          style="
+            background: #16262a;
+            border-radius: 14px;
+            padding: 22px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+          "
+        >
+          <div
+            id="statusRing"
+            class="gwRing calm"
+            style="
+              width: 64px;
+              height: 64px;
+              border-radius: 50%;
+              border: 2px solid #4fd1a5;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 26px;
+              color: #4fd1a5;
+              flex-shrink: 0;
+            "
+          >
+            <span id="statusIconOk">✓</span>
+            <span id="statusIconAlert" class="hidden">⚠</span>
+          </div>
+          <div>
+            <div id="statusTitle" style="font-size: 17px; font-weight: 500">
+              All clear
+            </div>
+            <div
+              id="statusSubtitle"
+              style="font-size: 13px; color: #7c9490; margin-top: 2px"
+            >
+              Waiting for sensor data...
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="gw-stat-row gwCard"
+        style="
+          animation-delay: 0.2s;
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 16px;
+          margin-bottom: 16px;
+        "
+      >
+        <div
+          class="gwStatCard"
+          style="background: #16262a; border-radius: 14px; padding: 18px"
+        >
+          <div style="font-size: 13px; color: #7c9490; margin-bottom: 8px">
+            PIR / Activity
+          </div>
+          <div id="pirStatusText" style="font-size: 15px">Scanning room...</div>
+          <div
+            id="pirTimestamp"
+            style="
+              font-size: 11px;
+              color: #7c9490;
+              font-family: &quot;IBM Plex Mono&quot;, monospace;
+              margin-top: 6px;
+            "
+          >
+            —
+          </div>
+        </div>
+        <div
+          class="gwStatCard"
+          style="background: #16262a; border-radius: 14px; padding: 18px"
+        >
+          <div style="font-size: 13px; color: #7c9490; margin-bottom: 8px">
+            Fall alert
+          </div>
+          <div id="fallStatusText" style="font-size: 15px; color: #7c9490">
+            None yet
+          </div>
+          <div
+            id="fallTimestamp"
+            style="
+              font-size: 11px;
+              color: #7c9490;
+              font-family: &quot;IBM Plex Mono&quot;, monospace;
+              margin-top: 6px;
+            "
+          >
+            —
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="gwCard"
+        style="
+          animation-delay: 0.3s;
+          background: #16262a;
+          border-radius: 14px;
+          padding: 20px;
+          margin-bottom: 16px;
+        "
+      >
+        <div style="font-size: 13px; color: #7c9490; margin-bottom: 10px">
+          CSI signal variance (Live Radio Chaos)
+        </div>
+        <div style="height: 110px"><canvas id="csiChart"></canvas></div>
+      </div>
+    </div>
+
+    <div id="fallOverlay" class="gwOverlay hidden">
+      <div class="gwOverlayCard">
+        <div style="font-size: 40px; margin-bottom: 12px">⚠️</div>
+        <h2 style="margin: 0 0 10px; font-size: 22px">
+          Possible fall detected
+        </h2>
+        <p
+          id="fallOverlayDetail"
+          style="
+            color: #b9c4c1;
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 0 0 8px;
+          "
+        >
+          Confirming with sensor data…
+        </p>
+        <div
+          id="fallCountdown"
+          style="
+            font-family: &quot;IBM Plex Mono&quot;, monospace;
+            font-size: 32px;
+            color: #ff7a59;
+            margin: 16px 0;
+          "
+        >
+          30
+        </div>
+        <div
+          id="fallDismissBtn"
+          class="gwResolveBtn"
+          style="
+            background: #4fd1a5;
+            color: #04342c;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 12px 0;
+            border-radius: 10px;
+            cursor: pointer;
+          "
+        >
+          Mark as checked (Cancel)
+        </div>
+      </div>
+    </div>
+
+    <script src="js/socketClient.js"></script>
+    <script src="js/chartConfig.js"></script>
+    <script src="js/main.js"></script>
+  </body>
+</html>
