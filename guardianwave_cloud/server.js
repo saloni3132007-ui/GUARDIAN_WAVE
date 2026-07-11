@@ -33,7 +33,11 @@ db.serialize(() => {
 
 // EXPRESS MIDDLEWARE
 app.use(express.json()); // Allows us to read JSON from the frontend
-app.use(express.static(path.join(__dirname, "public"))); // Serve the Web UI
+app.get("/", (req, res) => {
+  res.redirect("/landing.html");
+});
+
+app.use(express.static(path.join(__dirname, "public"), { index: false }));
 
 //  AUTHENTICATION ROUTES
 app.post("/api/signup", (req, res) => {

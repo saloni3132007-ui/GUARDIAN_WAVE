@@ -144,3 +144,32 @@ vite.config.ts.timestamp-*
 
 # ESP-IDF
 build/
+
+
+# Node.js & Backend
+node_modules/
+npm-debug.log*
+
+
+# Security & Credentials
+.env
+
+# Database & Local State
+guardianwave.db
+*.db-journal
+*.sqlite3
+
+# Logs
+alert_history.log
+*.log
+
+# ESP32 Firmware (ESP-IDF)
+build/
+sdkconfig.old
+managed_components/
+dependencies.lock
+
+# OS & Editor Files
+.DS_Store
+.vscode/
+*.swp

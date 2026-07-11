@@ -103,14 +103,25 @@
     if (payload.status === "detected") {
       showFallOverlay();
       updateFallCard("Fall detected — calling in 30s", true);
+      logHistory("⚠️ Severe Fall Detected — Awaiting User Confirmation", true);
     } else if (payload.status === "resolved") {
       hideFallOverlay();
       updateFallCard("Resolved — No emergency", false);
       setRoomStatus(false, "All clear", "Alarm dismissed");
+      logHistory("✓ Alarm Canceled Locally — Safety Confirmed", false);
     } else if (payload.status === "escalated") {
       hideFallOverlay();
       updateFallCard("Escalated — Twilio dispatched", true);
       setRoomStatus(true, "Emergency Alert", "Contact notified");
+      logHistory("📞 Escalated — Emergency Contact successfully called", true);
+
+      //  Hospital Call Simulation (Demo Mode)
+      // Wait 4 seconds to simulate the family member not answering
+      setTimeout(function () {
+        var hospOverlay = document.getElementById("hospitalOverlay");
+        if (hospOverlay) hospOverlay.classList.remove("hidden");
+        logHistory("🏥 Hospital Notified (Demo) - Contact unavailable", true);
+      }, 4000);
     }
   });
 
@@ -124,13 +135,22 @@
     });
   }
 
-  // Sign out behavior
+  var hospDismissBtn = document.getElementById("hospitalDismissBtn");
+  if (hospDismissBtn) {
+    hospDismissBtn.addEventListener("click", function () {
+      var hospOverlay = document.getElementById("hospitalOverlay");
+      if (hospOverlay) hospOverlay.classList.add("hidden");
+      setRoomStatus(false, "All clear", "System Reset after escalation");
+      updateFallCard("Reset after escalation", false);
+    });
+  }
+
   var signOutBtn = document.getElementById("signOutBtn");
   if (signOutBtn) {
     signOutBtn.addEventListener("click", function () {
       localStorage.removeItem("gw_user");
       if (GW._socket) GW._socket.close();
-      window.location.href = "signin.html";
+      window.location.href = "landing.html";
     });
   }
 })();

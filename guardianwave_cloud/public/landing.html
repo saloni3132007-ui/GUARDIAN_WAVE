@@ -108,7 +108,8 @@
       }
 
       .container {
-        max-width: 1200px;
+        width: 100%;
+        max-width: 100%;
         margin: 0 auto;
         padding: 0 40px;
       }
@@ -245,61 +246,75 @@
 
     <div style="position: relative; z-index: 1">
       <div
-        class="container"
         style="
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding-top: 22px;
-          padding-bottom: 22px;
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          background: rgba(8, 15, 17, 0.85);
+          backdrop-filter: blur(12px);
           border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+          z-index: 100;
         "
       >
-        <div style="font-size: 18px; font-weight: 500; letter-spacing: 0.5px">
-          GUARDIAN<span class="gwLogoWave">WAVE</span>
-        </div>
-        <div style="display: flex; gap: 36px; font-size: 15px; color: #9fb0ac">
-          <span
-            class="gwNavLink"
-            onclick="
-              document
-                .getElementById('features')
-                .scrollIntoView({ behavior: 'smooth' })
-            "
-            >Features</span
-          >
-          <span
-            class="gwNavLink"
-            onclick="
-              document
-                .getElementById('workflow')
-                .scrollIntoView({ behavior: 'smooth' })
-            "
-            >Workflow</span
-          >
-          <span
-            class="gwNavLink"
-            onclick="
-              document
-                .getElementById('gallery')
-                .scrollIntoView({ behavior: 'smooth' })
-            "
-            >Gallery</span
-          >
-        </div>
-        <a
-          href="signin.html"
-          class="gwGhost"
+        <div
+          class="container"
           style="
-            font-size: 14px;
-            padding: 10px 22px;
-            border: 1px solid rgba(79, 209, 165, 0.5);
-            color: #4fd1a5;
-            border-radius: 22px;
-            display: inline-block;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 16px;
+            padding-bottom: 16px;
           "
-          >Sign in / up</a
         >
+          <div style="font-size: 18px; font-weight: 500; letter-spacing: 0.5px">
+            GUARDIAN<span class="gwLogoWave">WAVE</span>
+          </div>
+          <div
+            style="display: flex; gap: 36px; font-size: 15px; color: #9fb0ac"
+          >
+            <span
+              class="gwNavLink"
+              onclick="
+                document
+                  .getElementById('features')
+                  .scrollIntoView({ behavior: 'smooth' })
+              "
+              >Features</span
+            >
+            <span
+              class="gwNavLink"
+              onclick="
+                document
+                  .getElementById('workflow')
+                  .scrollIntoView({ behavior: 'smooth' })
+              "
+              >Workflow</span
+            >
+            <span
+              class="gwNavLink"
+              onclick="
+                document
+                  .getElementById('gallery')
+                  .scrollIntoView({ behavior: 'smooth' })
+              "
+              >Gallery</span
+            >
+          </div>
+          <a
+            href="signin.html"
+            class="gwGhost"
+            style="
+              font-size: 14px;
+              padding: 10px 22px;
+              border: 1px solid rgba(79, 209, 165, 0.5);
+              color: #4fd1a5;
+              border-radius: 22px;
+              display: inline-block;
+            "
+            >Sign in / up</a
+          >
+        </div>
       </div>
 
       <div
@@ -307,7 +322,7 @@
         style="
           position: relative;
           text-align: center;
-          padding-top: 100px;
+          padding-top: 140px;
           padding-bottom: 90px;
         "
       >
@@ -322,7 +337,7 @@
             text-shadow: 0 0 10px rgba(79, 209, 165, 0.5);
           "
         >
-          CITADEL 1.0 · FALL AND BREATHING MONITOR
+          CITADEL 1.0 · FALL MONITORING RADAR
         </div>
         <div
           class="gwCard hero-title"
@@ -348,8 +363,8 @@
             line-height: 1.65;
           "
         >
-          GuardianWave watches breathing and falls through WiFi signals alone,
-          then calls for help the second it's needed.
+          GuardianWave detects falls through Wi-Fi signal chaos alone, calling
+          for help the second it's needed while preserving privacy.
         </div>
         <div
           class="gwCard"
@@ -361,8 +376,10 @@
             margin-bottom: 56px;
           "
         >
+          <!-- YouTube Link Setup -->
           <a
-            href="index.html"
+            href="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+            target="_blank"
             class="gwCTA"
             style="
               font-size: 16px;
@@ -397,7 +414,7 @@
             viewBox="0 0 500 60"
             style="
               width: 100%;
-              max-width: 720px;
+              max-width: 100%;
               height: 80px;
               display: block;
               margin: 0 auto;
@@ -435,13 +452,14 @@
         >
           FEATURES
         </div>
+
         <div
           class="features-grid"
           style="
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 28px;
-            max-width: 1100px;
+            width: 100%;
             margin: 0 auto;
           "
         >
@@ -455,11 +473,11 @@
               border: 1px solid rgba(79, 209, 165, 0.15);
             "
           >
-            <i class="gwIcon gwLive" style="font-size: 34px; color: #4fd1a5"
-              >💓</i
+            <i class="gwIcon gwPrivacy" style="font-size: 34px; color: #4fd1a5"
+              >🛡️</i
             >
             <div style="font-size: 19px; font-weight: 500; margin-top: 18px">
-              Breathing tracking
+              Preserving Privacy
             </div>
             <div
               style="
@@ -469,9 +487,11 @@
                 line-height: 1.6;
               "
             >
-              Reads breathing rate from WiFi variance, no wearable needed.
+              Neither attached camera or audio sensors with device nor any
+              wearables needed.
             </div>
           </div>
+
           <div
             class="gwCard gwFeatureCard"
             style="
@@ -501,6 +521,7 @@
               Confirms falls with PIR and CSI together, cutting false alarms.
             </div>
           </div>
+
           <div
             class="gwCard gwFeatureCard"
             style="
@@ -558,7 +579,7 @@
           viewBox="0 0 600 240"
           style="
             width: 100%;
-            max-width: 1000px;
+            max-width: 100%;
             height: auto;
             display: block;
             margin: 0 auto;
@@ -891,10 +912,11 @@
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 24px;
-            max-width: 900px;
+            width: 100%;
             margin: 0 auto;
           "
         >
+          <!-- Gallery Item 1 -->
           <div
             class="gwCard gwFeatureCard"
             style="
@@ -906,11 +928,17 @@
               align-items: center;
               justify-content: center;
               border: 1px solid rgba(255, 255, 255, 0.06);
-              font-size: 38px;
+              overflow: hidden;
             "
           >
-            🔧
+            <img
+              src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80"
+              alt="Hardware Setup"
+              style="width: 100%; height: 100%; object-fit: cover"
+            />
           </div>
+
+          <!-- Gallery Item 2 -->
           <div
             class="gwCard gwFeatureCard"
             style="
@@ -922,11 +950,17 @@
               align-items: center;
               justify-content: center;
               border: 1px solid rgba(255, 255, 255, 0.06);
-              font-size: 38px;
+              overflow: hidden;
             "
           >
-            🖥️
+            <img
+              src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=600&q=80"
+              alt="Dashboard Interface"
+              style="width: 100%; height: 100%; object-fit: cover"
+            />
           </div>
+
+          <!-- Gallery Item 3 -->
           <div
             class="gwCard gwFeatureCard"
             style="
@@ -938,10 +972,14 @@
               align-items: center;
               justify-content: center;
               border: 1px solid rgba(255, 255, 255, 0.06);
-              font-size: 38px;
+              overflow: hidden;
             "
           >
-            🔌
+            <img
+              src="https://images.unsplash.com/photo-1558346490-a72e53ae2d4f?auto=format&fit=crop&w=600&q=80"
+              alt="Device Wiring"
+              style="width: 100%; height: 100%; object-fit: cover"
+            />
           </div>
         </div>
       </div>
@@ -963,14 +1001,26 @@
           GuardianWave · Citadel 1.0
         </div>
         <div style="display: flex; gap: 20px; font-size: 14px; color: #7c9490">
-          <span class="gwGhost" style="padding: 6px 10px; border-radius: 6px"
-            >Team</span
+          <!-- Links for Footer -->
+          <a
+            href="https://github.com/saloni3132007-ui/GUARDIAN_WAVE"
+            target="_blank"
+            class="gwGhost"
+            style="padding: 6px 10px; border-radius: 6px"
+            >Team HackCypher</a
           >
-          <span class="gwGhost" style="padding: 6px 10px; border-radius: 6px"
-            >Contact</span
+          <a
+            href="mailto:contact@guardianwave.com"
+            class="gwGhost"
+            style="padding: 6px 10px; border-radius: 6px"
+            >Contact</a
           >
-          <span class="gwGhost" style="padding: 6px 10px; border-radius: 6px"
-            >GitHub</span
+          <a
+            href="https://github.com/saloni3132007-ui/GUARDIAN_WAVE"
+            target="_blank"
+            class="gwGhost"
+            style="padding: 6px 10px; border-radius: 6px"
+            >GitHub</a
           >
         </div>
       </div>

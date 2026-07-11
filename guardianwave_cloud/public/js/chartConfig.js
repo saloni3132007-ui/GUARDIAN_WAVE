@@ -34,15 +34,30 @@
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        animation: { duration: 0 }, // Disable animation to keep the live feed super fast and crisp
+        animation: { duration: 0 },
         interaction: { intersect: false },
         plugins: {
           legend: { display: false },
-          tooltip: { enabled: false },
+          tooltip: { enabled: true, mode: "index", intersect: false },
         },
         scales: {
-          x: { display: false },
-          y: { display: false, min: 0 }, // Base the graph bottom at 0
+          x: {
+            display: true,
+            grid: { color: "rgba(255,255,255,0.05)" },
+            ticks: { color: "#7C9490" },
+          },
+          y: {
+            display: true,
+            min: 0,
+            grid: { color: "rgba(255,255,255,0.05)" },
+            ticks: { color: "#7C9490" },
+            title: {
+              display: true,
+              text: "Variance Scale",
+              color: "#7C9490",
+              font: { size: 12 },
+            },
+          },
         },
       },
     });

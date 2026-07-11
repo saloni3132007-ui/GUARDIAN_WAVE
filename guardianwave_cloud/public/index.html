@@ -109,10 +109,12 @@
       }
 
       .container {
-        max-width: 1200px;
+        max-width: 95%;
+        width: 100%;
         margin: 0 auto;
         padding: 0 40px;
       }
+
       .ambient {
         position: fixed;
         inset: 0;
@@ -296,6 +298,7 @@
               font-size: 13px;
               padding: 7px 16px;
               border-radius: 22px;
+              transition: 0.2s;
             "
           >
             Sign Out
@@ -356,12 +359,13 @@
         </div>
       </div>
 
+      <!-- Updated to a 3-column Grid for Live CSI Box -->
       <div
         class="gw-stat-row gwCard"
         style="
           animation-delay: 0.2s;
           display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
+          grid-template-columns: repeat(3, minmax(0, 1fr));
           gap: 16px;
           margin-bottom: 16px;
         "
@@ -373,7 +377,9 @@
           <div style="font-size: 13px; color: #7c9490; margin-bottom: 8px">
             PIR / Activity
           </div>
-          <div id="pirStatusText" style="font-size: 15px">Scanning room...</div>
+          <div id="pirStatusText" style="font-size: 16px; font-weight: 500">
+            👀 Scanning room...
+          </div>
           <div
             id="pirTimestamp"
             style="
@@ -386,6 +392,37 @@
             —
           </div>
         </div>
+
+        <div
+          class="gwStatCard"
+          style="background: #16262a; border-radius: 14px; padding: 18px"
+        >
+          <div style="font-size: 13px; color: #7c9490; margin-bottom: 8px">
+            Live CSI Variance
+          </div>
+          <div
+            id="csiVarianceValue"
+            style="
+              font-size: 24px;
+              font-weight: 600;
+              color: #e8a33d;
+              margin-top: 2px;
+            "
+          >
+            0.00
+          </div>
+          <div
+            style="
+              font-size: 11px;
+              color: #7c9490;
+              font-family: &quot;IBM Plex Mono&quot;, monospace;
+              margin-top: 6px;
+            "
+          >
+            real-time stream
+          </div>
+        </div>
+
         <div
           class="gwStatCard"
           style="background: #16262a; border-radius: 14px; padding: 18px"
@@ -410,6 +447,7 @@
         </div>
       </div>
 
+      <!-- Detailed Graph View -->
       <div
         class="gwCard"
         style="
@@ -421,13 +459,53 @@
         "
       >
         <div style="font-size: 13px; color: #7c9490; margin-bottom: 10px">
-          CSI signal variance (Live Radio Chaos)
+          CSI Signal Variance (Detailed Radio Chaos)
         </div>
-        <div style="height: 110px"><canvas id="csiChart"></canvas></div>
+        <div style="height: 350px"><canvas id="csiChart"></canvas></div>
+      </div>
+
+      <!-- Alert History Section -->
+      <div
+        class="gwCard"
+        style="
+          animation-delay: 0.5s;
+          background: #16262a;
+          border-radius: 14px;
+          padding: 20px;
+          margin-top: 16px;
+        "
+      >
+        <div
+          style="
+            font-size: 15px;
+            font-weight: 500;
+            color: #eaf2f0;
+            margin-bottom: 12px;
+          "
+        >
+          Alert History
+        </div>
+        <div
+          id="historyLog"
+          style="
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 13.5px;
+            color: #b9c4c1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+          "
+        >
+          <div style="color: #7c9490; font-style: italic; padding: 8px 0">
+            No anomalies detected yet in this session.
+          </div>
+        </div>
       </div>
     </div>
 
-    <div id="fallOverlay" class="gwOverlay hidden">
+    <!-- Fall Suspected Overlay -->
+    <div id="fallOverlay" class="gwOverlay hidden" style="z-index: 50">
       <div class="gwOverlayCard">
         <div style="font-size: 40px; margin-bottom: 12px">⚠️</div>
         <h2 style="margin: 0 0 10px; font-size: 22px">
@@ -469,6 +547,45 @@
           "
         >
           Mark as checked (Cancel)
+        </div>
+      </div>
+    </div>
+
+    <!-- Hospital Emergency Simulation Overlay -->
+    <div id="hospitalOverlay" class="gwOverlay hidden" style="z-index: 60">
+      <div class="gwOverlayCard">
+        <div style="font-size: 40px; margin-bottom: 12px">🏥</div>
+        <h2 style="margin: 0 0 10px; font-size: 22px">
+          Emergency Contact Unavailable
+        </h2>
+        <p
+          style="
+            color: #b9c4c1;
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 0 0 24px;
+          "
+        >
+          The registered family contact did not pick up. We are now routing the
+          alert directly to the nearest hospital.<br /><br /><span
+            style="color: #e8a33d"
+            ><em>(Demo Mode: No actual hospital call will be placed)</em></span
+          >
+        </p>
+        <div
+          id="hospitalDismissBtn"
+          class="gwResolveBtn"
+          style="
+            background: #e8a33d;
+            color: #04342c;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 12px 0;
+            border-radius: 10px;
+            cursor: pointer;
+          "
+        >
+          Return to Dashboard
         </div>
       </div>
     </div>
