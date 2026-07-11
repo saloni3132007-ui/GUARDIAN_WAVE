@@ -17,7 +17,6 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
-// UTILITY: Alert Persistence
 function logSystemEvent(deviceId, eventType, details) {
   const timestamp = new Date().toISOString();
   const logEntry = `[${timestamp}] DEV:${deviceId} | EVENT:${eventType} | DETAILS:${details}\n`;
@@ -63,44 +62,70 @@ class HampelFilter {
   }
 }
 
+// ADVANCED STATE MANAGEMENT
 class DeviceTracker {
   constructor(deviceId, ws) {
     this.deviceId = deviceId;
     this.ws = ws;
 
-    this.csiFilter = new HampelFilter();
+    this.csiFilter = new HampelFilter(40, 3); // increasing memory filter to catch slower falls
     this.systemState = "IDLE";
     this.alertTimer = null;
     this.observationTimer = null;
     this.isAlertActive = false;
 
     this.persistentPirState = 0;
-    this.pirClearTimeout = null;
 
     this.postFallVarianceSum = 0;
     this.postFallFrameCount = 0;
+
+    // EMA Smoothing Variables
+    this.smoothedAmplitude = null;
+    this.emaAlpha = 0.2; // 0.2 means 20% new data, 80% history (heavy smoothing)
 
     logSystemEvent(this.deviceId, "CONNECTED", "Device initialized tracking.");
   }
 
   processSensorData(sensorData) {
-    if (sensorData.pir === 1) {
-      this.persistentPirState = 1;
-      if (this.pirClearTimeout) clearTimeout(this.pirClearTimeout);
-      this.pirClearTimeout = setTimeout(() => {
-        this.persistentPirState = 0;
-      }, 4000);
+    this.persistentPirState = sensorData.pir;
+
+    // Apply EMA Smoothing before Variance Calculation
+    if (this.smoothedAmplitude === null) {
+      this.smoothedAmplitude = sensorData.amplitude;
+    } else {
+      this.smoothedAmplitude =
+        this.emaAlpha * sensorData.amplitude +
+        (1 - this.emaAlpha) * this.smoothedAmplitude;
     }
 
-    let filterResult = this.csiFilter.process(sensorData.amplitude);
+    let filterResult = this.csiFilter.process(this.smoothedAmplitude);
+
+    // HUMAN ACTIVITY CLASSIFIER
+    let activityStatus = "EMPTY";
+
+    if (this.systemState === "ALERT") {
+      activityStatus = "🚨 FALL DETECTED 🚨";
+    } else if (this.systemState === "FALL_SUSPECTED") {
+      activityStatus = "⚠️ ANALYZING IMPACT...";
+    } else if (this.persistentPirState === 1) {
+      // setting threshold according to test
+      if (filterResult.variance >= 3.0) {
+        activityStatus = "🏃 RUNNING / LARGE MOVEMENT";
+      } else if (filterResult.variance >= 1.5) {
+        activityStatus = "🚶 WALKING";
+      } else {
+        activityStatus = "🧍 IDLE / SITTING";
+      }
+    }
 
     process.stdout.write(
-      `\r[DEV: ${this.deviceId}] [STATE: ${this.systemState}] PIR: ${this.persistentPirState} | Variance: ${filterResult.variance.toFixed(2)}      `,
+      `\r[DEV: ${this.deviceId}] [SYS: ${this.systemState}] [Activity: ${activityStatus.padEnd(26)}] PIR: ${this.persistentPirState} | Var: ${filterResult.variance.toFixed(2)}      `,
     );
 
+    // THE MEDICAL STATE MACHINE
     if (this.systemState === "IDLE") {
       if (
-        filterResult.variance > 6.0 &&
+        filterResult.variance > 4.0 &&
         this.persistentPirState === 1 &&
         !this.isAlertActive
       ) {
@@ -124,7 +149,7 @@ class DeviceTracker {
             `\n[DEV: ${this.deviceId}] [ANALYSIS COMPLETE] Avg post-impact variance: ${averagePostFallVariance.toFixed(2)}`,
           );
 
-          if (averagePostFallVariance < 2.0) {
+          if (averagePostFallVariance < 1.5) {
             console.log(
               `[DEV: ${this.deviceId}] [CRITICAL] Post-fall stillness confirmed. Triggering Alert!`,
             );
@@ -146,7 +171,7 @@ class DeviceTracker {
             );
             this.systemState = "IDLE";
           }
-        }, 3000);
+        }, 8000);
       }
     } else if (this.systemState === "FALL_SUSPECTED") {
       this.postFallVarianceSum += filterResult.variance;
@@ -180,7 +205,7 @@ class DeviceTracker {
 
         this.resetState();
       }
-    }, 10000);
+    }, 30000);
   }
 
   cancelAlert() {
@@ -236,6 +261,6 @@ wss.on("connection", (ws, req) => {
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`===================================================`);
-  console.log(`GuardianWave State Machine Online`);
+  console.log(`GuardianWave Live Activity Tracker Online`);
   console.log(`===================================================`);
 });
