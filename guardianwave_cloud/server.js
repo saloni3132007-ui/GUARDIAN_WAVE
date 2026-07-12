@@ -12,7 +12,6 @@ const twilioClient = twilio(
   process.env.TWILIO_ACCOUNT_SID,
   process.env.TWILIO_AUTH_TOKEN,
 );
-const MY_PHONE_NUMBER = process.env.MY_PHONE_NUMBER;
 const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER;
 
 const app = express();
@@ -32,14 +31,13 @@ db.serialize(() => {
 });
 
 // EXPRESS MIDDLEWARE
-app.use(express.json()); // Allows us to read JSON from the frontend
+app.use(express.json());
 app.get("/", (req, res) => {
   res.redirect("/landing.html");
 });
-
 app.use(express.static(path.join(__dirname, "public"), { index: false }));
 
-//  AUTHENTICATION ROUTES
+// AUTHENTICATION ROUTES
 app.post("/api/signup", (req, res) => {
   const { name, email, password, phone } = req.body;
   db.run(
@@ -120,12 +118,14 @@ class HampelFilter {
 }
 
 // ADVANCED STATE MANAGEMENT
+let activeDashboardUser = null;
+
 class DeviceTracker {
   constructor(deviceId, ws) {
     this.deviceId = deviceId;
     this.ws = ws;
 
-    this.csiFilter = new HampelFilter(40, 3); // increasing memory filter to catch
+    this.csiFilter = new HampelFilter(15, 3);
     this.systemState = "IDLE";
     this.alertTimer = null;
     this.observationTimer = null;
@@ -136,7 +136,7 @@ class DeviceTracker {
     this.postFallFrameCount = 0;
 
     this.smoothedAmplitude = null;
-    this.emaAlpha = 0.2; // 20% real data and 80% pre trained data
+    this.emaAlpha = 0.5;
 
     logSystemEvent(
       this.deviceId,
@@ -158,7 +158,6 @@ class DeviceTracker {
 
     let filterResult = this.csiFilter.process(this.smoothedAmplitude);
 
-    // HUMAN ACTIVITY CLASSIFIER
     let activityStatus = "Room is empty";
     if (this.systemState === "ALERT") {
       activityStatus = "FALL DETECTED";
@@ -174,7 +173,6 @@ class DeviceTracker {
       }
     }
 
-    // Send live data to the web dashboard
     broadcastToUI({
       event: "csiVariance",
       value: filterResult.variance,
@@ -191,10 +189,9 @@ class DeviceTracker {
       `\r[DEV: ${this.deviceId}] [SYS: ${this.systemState}] [Activity: ${activityStatus.padEnd(26)}] PIR: ${this.persistentPirState} | Var: ${filterResult.variance.toFixed(2)}      `,
     );
 
-    // THE MEDICAL STATE MACHINE
     if (this.systemState === "IDLE") {
       if (
-        filterResult.variance > 4.0 &&
+        filterResult.variance > 5.0 &&
         this.persistentPirState === 1 &&
         !this.isAlertActive
       ) {
@@ -240,7 +237,7 @@ class DeviceTracker {
             );
             this.systemState = "IDLE";
           }
-        }, 8000);
+        }, 3000);
       }
     } else if (this.systemState === "FALL_SUSPECTED") {
       this.postFallVarianceSum += filterResult.variance;
@@ -250,12 +247,12 @@ class DeviceTracker {
 
   triggerEmergencyProtocol() {
     this.isAlertActive = true;
-    this.ws.send("TRIGGER_BUZZER"); // Trigger hardware buzzer
+    this.ws.send("TRIGGER_BUZZER");
     broadcastToUI({
       event: "fallAlert",
       status: "detected",
       timestamp: Date.now(),
-    }); // Trigger UI Overlay
+    });
 
     this.alertTimer = setTimeout(() => {
       if (this.isAlertActive) {
@@ -265,7 +262,7 @@ class DeviceTracker {
         logSystemEvent(
           this.deviceId,
           "TWILIO_CALL",
-          "Victim unresponsive. Emergency call dispatched.",
+          "Victim unresponsive. Fetching registered number...",
         );
         broadcastToUI({
           event: "fallAlert",
@@ -273,18 +270,69 @@ class DeviceTracker {
           timestamp: Date.now(),
         });
 
-        twilioClient.calls
-          .create({
-            twiml:
-              '<Response><Say voice="alice">Critical Alert. Guardian Wave has detected a severe fall. The victim appears unresponsive. Immediate assistance is required.</Say></Response>',
-            to: MY_PHONE_NUMBER,
-            from: TWILIO_PHONE_NUMBER,
-          })
-          .catch((err) => console.error(`[TWILIO ERROR] Failed to dial:`, err));
+        const fallbackNumber = process.env.MY_PHONE_NUMBER;
+
+        db.get(
+          `SELECT phone FROM users WHERE name = ?`,
+          [activeDashboardUser],
+          (err, row) => {
+            const targetPhoneNumber =
+              row && row.phone ? row.phone : fallbackNumber;
+
+            console.log(
+              `[DEV: ${this.deviceId}] Dialing emergency contact: ${targetPhoneNumber}`,
+            );
+
+            twilioClient.calls
+              .create({
+                twiml:
+                  '<Response><Say voice="alice">Critical Alert. Guardian Wave has detected a severe fall. The victim appears unresponsive. Immediate assistance is required.</Say></Response>',
+                to: targetPhoneNumber,
+                from: TWILIO_PHONE_NUMBER,
+              })
+              .then((call) => {
+                let checkStatus = setInterval(async () => {
+                  try {
+                    let currentCall = await twilioClient
+                      .calls(call.sid)
+                      .fetch();
+                    if (
+                      ["no-answer", "busy", "failed", "canceled"].includes(
+                        currentCall.status,
+                      )
+                    ) {
+                      clearInterval(checkStatus);
+                      broadcastToUI({
+                        event: "hospitalFallback",
+                        timestamp: Date.now(),
+                      });
+                      logSystemEvent(
+                        this.deviceId,
+                        "HOSPITAL_ESCALATION",
+                        "Contact unavailable. Hospital notified.",
+                      );
+                    } else if (currentCall.status === "completed") {
+                      clearInterval(checkStatus);
+                      logSystemEvent(
+                        this.deviceId,
+                        "CALL_ANSWERED",
+                        "Contact answered the emergency call.",
+                      );
+                    }
+                  } catch (e) {
+                    console.error("Error fetching call status", e);
+                  }
+                }, 3000);
+              })
+              .catch((err) =>
+                console.error(`[TWILIO ERROR] Failed to dial:`, err),
+              );
+          },
+        );
 
         this.resetState();
       }
-    }, 30000); // 30 seconds buzzer trigger
+    }, 30000); // 30 seconds to match the UI Countdown
   }
 
   cancelAlert() {
@@ -324,6 +372,12 @@ wss.on("connection", (ws, req) => {
     if (payload.event === "ui_connect") {
       ws.isUI = true;
       console.log(`\n[+] Web Dashboard UI Connected`);
+      return;
+    }
+
+    if (payload.event === "set_active_user") {
+      activeDashboardUser = payload.user;
+      console.log(`\n[+] Dashboard linked to user: ${activeDashboardUser}`);
       return;
     }
 
