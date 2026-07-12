@@ -3,10 +3,10 @@
 GuardianWave is a contactless, privacy-preserving fall detection system designed for elderly care and remote monitoring. It completely eliminates the need for cameras or wearable devices by leveraging Wi-Fi Channel State Information (CSI) and PIR (Passive Infrared) sensors to detect severe impacts and post-fall stillness. If a fall is confirmed and goes unresolved, the system automatically escalates the event by calling an emergency contact via the Twilio Voice API.
 
 **Live Demo**
-
+https://drive.google.com/file/d/12VkjmNewfj6coPoBfMYP0ROaXCJ8nq4_/view?usp=drivesdk
 
 **Deployed link**
-
+http://13.53.112.1:3000
 
 Built by team HackCypher at Citadel 1.0.
 
@@ -37,39 +37,41 @@ You will need two ESP32 microcontrollers:
 1. **The Wi-Fi based Tripwire (Emitter)** — any standard ESP32 plugged into a wall outlet across the room. It constantly broadcasts UDP packets to act as a radio "metronome."
 2. **The Brain (Receiver)** — an ESP32-S3 equipped with a PIR motion sensor (Pin 5) and an active buzzer (Pin 4). It reads the radio waves, applies MAC filtering, calculates signal variance, and streams the data to the Node.js server.
 
-
 ## 💻 Threshold Logic
 
-  1. Baseline Subtraction
-What it does: Separates "the room as it normally is" from "something changed."
-Static objects (walls, furniture) always distort the WiFi signal the same way, so raw CSI amplitude never sits at zero — it has a large, constant offset from just being in a room. Your AdaptiveBackgroundModel tracks a slowly-updating running average of this static component (via background_alpha) and subtracts it from each incoming frame:
-dynamic = raw_amplitude − background_estimate
-    2. Deviation Signal Extraction
-What it does: Converts the baseline-subtracted signal into a single number representing "how much did this frame just deviate."
-After subtraction, you collapse the multi-subcarrier dynamic frame into one scalar per sample:
-disturbance_magnitude = mean(|dynamic|).
-    3. Threshold Limit
-What it does: Decides how large a deviation has to be before it counts as "something happened," using a statistical threshold rather than a fixed number.
-Instead of a hardcoded magnitude cutoff (which would break the moment lighting, furniture, or WiFi conditions changed), your FallDetector computes a rolling z-score.
-     
+1. Baseline Subtraction
+   What it does: Separates "the room as it normally is" from "something changed."
+   Static objects (walls, furniture) always distort the WiFi signal the same way, so raw CSI amplitude never sits at zero — it has a large, constant offset from just being in a room. Your AdaptiveBackgroundModel tracks a slowly-updating running average of this static component (via background_alpha) and subtracts it from each incoming frame:
+   dynamic = raw_amplitude − background_estimate
+2. Deviation Signal Extraction
+   What it does: Converts the baseline-subtracted signal into a single number representing "how much did this frame just deviate."
+   After subtraction, you collapse the multi-subcarrier dynamic frame into one scalar per sample:
+   disturbance_magnitude = mean(|dynamic|).
+3. Threshold Limit
+   What it does: Decides how large a deviation has to be before it counts as "something happened," using a statistical threshold rather than a fixed number.
+   Instead of a hardcoded magnitude cutoff (which would break the moment lighting, furniture, or WiFi conditions changed), your FallDetector computes a rolling z-score.
 
 Power is supplied via an MB102 breadboard power module (5V rail) rather than directly from a battery, to keep the supply regulated during WiFi transmit current spikes — an unregulated supply was found to cause false PIR triggers and noise spikes in the CSI variance reading during testing.
 
 ## 💻 Software Installation
 
 ### 1. Clone the repository
+
 ```bash
 git clone https://github.com/saloni3132007-ui/GUARDIAN_WAVE.git
 cd GUARDIAN_WAVE/guardianwave_cloud
 ```
 
 ### 2. Install dependencies
+
 Ensure you have Node.js installed, then run:
+
 ```bash
 npm install express ws twilio sqlite3 dotenv
 ```
 
 ### 3. Environment variables (crucial)
+
 Create a `.env` file in the root of the `guardianwave_cloud` directory. Add your Twilio credentials and phone numbers. **Do not commit this file to GitHub.**
 
 ```
@@ -80,13 +82,13 @@ TWILIO_PHONE_NUMBER=+1234567890
 MY_PHONE_NUMBER=+1987654321
 ```
 
-| Variable | Purpose |
-|---|---|
-| `PORT` | The local port for the Node.js server (default: 3000). |
-| `TWILIO_ACCOUNT_SID` | Account SID from the Twilio Console (API authentication). |
-| `TWILIO_AUTH_TOKEN` | Auth Token from Twilio (API authorization). |
+| Variable              | Purpose                                                     |
+| --------------------- | ----------------------------------------------------------- |
+| `PORT`                | The local port for the Node.js server (default: 3000).      |
+| `TWILIO_ACCOUNT_SID`  | Account SID from the Twilio Console (API authentication).   |
+| `TWILIO_AUTH_TOKEN`   | Auth Token from Twilio (API authorization).                 |
 | `TWILIO_PHONE_NUMBER` | Virtual phone number provided by Twilio for outbound calls. |
-| `MY_PHONE_NUMBER` | The emergency contact's real-world phone number. |
+| `MY_PHONE_NUMBER`     | The emergency contact's real-world phone number.            |
 
 ## 🚀 Running the System
 
@@ -140,10 +142,10 @@ The dashboard and marketing pages share a calm, clinical-safety visual language 
 - **Dashboard layout:** top status bar (connection + device) → status ring (calm ✓ / alert ⚠) + breathing rate → three status cards (Breathing / PIR / Fall alert) → CSI signal variance chart → breathing waveform chart → full-screen fall alert overlay with a 30-second countdown and a "mark as checked" resolve action.
 - **Auth flow:** sign up collects name, email, password, and an expandable list of emergency contacts (name + phone each, first one marked primary and non-removable). Successful sign in or sign up redirects straight into the live dashboard.
 
-
 ## 👥 Team
 
 **HackCypher — Citadel 1.0 Hackathon**
+
 1. Saloni Gupta(Team lead)- Hardware and Research
 2. Narayan Shaw- Backend and Database
 3. Saurav Choubey- Frontend
