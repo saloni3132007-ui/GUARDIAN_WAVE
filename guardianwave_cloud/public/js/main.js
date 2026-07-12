@@ -2,14 +2,12 @@
   "use strict";
 
   // AUTHENTICATION GUARD
-  // If user is not logged in, boot them back to the signin page immediately!
   const userName = localStorage.getItem("gw_user");
   if (!userName) {
     window.location.href = "signin.html";
     return;
   }
 
-  // Personalize the dashboard
   const roomLabel = document.getElementById("deviceRoomLabel");
   if (roomLabel) {
     roomLabel.textContent = userName + "'s Room";
@@ -24,21 +22,79 @@
   var FALL_WINDOW_SECONDS = 30;
   var fallCountdownInterval = null;
 
+  GW.on("connectionChange", function (payload) {
+    if (
+      payload.connected &&
+      GW._socket &&
+      GW._socket.readyState === WebSocket.OPEN
+    ) {
+      GW._socket.send(
+        JSON.stringify({
+          event: "bind_user",
+          username: userName,
+        }),
+      );
+    }
+  });
+
   function formatTime(timestamp) {
     var date = timestamp ? new Date(timestamp) : new Date();
     var h = String(date.getHours()).padStart(2, "0");
     var m = String(date.getMinutes()).padStart(2, "0");
-    return h + ":" + m;
+    var s = String(date.getSeconds()).padStart(2, "0");
+    return h + ":" + m + ":" + s;
   }
 
-  // Update PIR & Status
+  // System History Logs
+  function logHistory(msg, isAlert) {
+    var logEl = document.getElementById("historyLog");
+    if (!logEl) return;
+
+    if (logEl.innerHTML.includes("No anomalies detected")) {
+      logEl.innerHTML = "";
+    }
+
+    var timeStr = formatTime(new Date());
+    var color = isAlert ? "var(--coral)" : "var(--teal)";
+
+    var entry = document.createElement("div");
+    entry.style.cssText =
+      "padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05); transition: 0.3s;";
+    entry.innerHTML = `<span style="color:${color}; font-family:'IBM Plex Mono', monospace; margin-right:12px; font-weight: 500;">[${timeStr}]</span> ${msg}`;
+
+    logEl.insertBefore(entry, logEl.firstChild);
+  }
+
+  // Live CSI Value Update
+  GW.on("csiVariance", function (payload) {
+    var csiValEl = document.getElementById("csiVarianceValue");
+    if (csiValEl && payload.value !== undefined) {
+      csiValEl.textContent = parseFloat(payload.value).toFixed(2);
+    }
+  });
+
   GW.on("pirStatus", function (payload) {
     payload = payload || {};
     var statusEl = document.getElementById("pirStatusText");
     if (statusEl && payload.message) {
-      statusEl.textContent = payload.message;
-      setRoomStatus(false, "Scanning Active", payload.message);
+      let text = payload.message;
+      let icon = "👀";
+
+      // Dynamic Emoji Injection
+      if (text.toLowerCase().includes("empty")) icon = "🪹";
+      else if (text.toLowerCase().includes("fall")) icon = "🚨";
+      else if (
+        text.toLowerCase().includes("running") ||
+        text.toLowerCase().includes("large")
+      )
+        icon = "🏃";
+      else if (text.toLowerCase().includes("walking")) icon = "🚶";
+      else if (text.toLowerCase().includes("idle")) icon = "🧍";
+
+      statusEl.textContent = icon + " " + text;
+      setRoomStatus(false, "Scanning Active", icon + " " + text);
     }
+
     var tsEl = document.getElementById("pirTimestamp");
     if (tsEl) tsEl.textContent = formatTime(payload.timestamp);
   });
@@ -114,15 +170,14 @@
       updateFallCard("Escalated — Twilio dispatched", true);
       setRoomStatus(true, "Emergency Alert", "Contact notified");
       logHistory("📞 Escalated — Emergency Contact successfully called", true);
-
-      //  Hospital Call Simulation (Demo Mode)
-      // Wait 4 seconds to simulate the family member not answering
-      setTimeout(function () {
-        var hospOverlay = document.getElementById("hospitalOverlay");
-        if (hospOverlay) hospOverlay.classList.remove("hidden");
-        logHistory("🏥 Hospital Notified (Demo) - Contact unavailable", true);
-      }, 4000);
     }
+  });
+
+  // Listens for the REAL backend update if the call is missed
+  GW.on("hospitalFallback", function (payload) {
+    var hospOverlay = document.getElementById("hospitalOverlay");
+    if (hospOverlay) hospOverlay.classList.remove("hidden");
+    logHistory("🏥 Hospital Notified - Contact unavailable", true);
   });
 
   var dismissBtn = document.getElementById("fallDismissBtn");
@@ -135,6 +190,7 @@
     });
   }
 
+  // Return to Dashboard button from the Hospital popup
   var hospDismissBtn = document.getElementById("hospitalDismissBtn");
   if (hospDismissBtn) {
     hospDismissBtn.addEventListener("click", function () {
@@ -145,6 +201,7 @@
     });
   }
 
+  // Sign out behavior
   var signOutBtn = document.getElementById("signOutBtn");
   if (signOutBtn) {
     signOutBtn.addEventListener("click", function () {
